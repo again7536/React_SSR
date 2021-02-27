@@ -1,51 +1,64 @@
 const path = require('path');
+const LoadablePlugin = require('@loadable/webpack-plugin');
 const nodeExternals = require('webpack-node-externals');
-//const LoadablePlugin = require('@loadable/webpack-plugin');
 const webpack = require('webpack');
 
-const getConfig = (isServer, dev) => ({
+const devMode = process.env.NODE_ENV === "development"? true : false;
+
+module.exports = [{
     entry: {
-        [isServer?'server':'client']: isServer
-            ?'./src/server.tsx'
-            : dev
-                    ?['webpack-hot-middleware/client', './src/client.tsx']
-                    :'./src/client.tsx'
+        client: ['webpack-hot-middleware/client','./src/client.tsx']
     },
     devtool:'inline-source-map',
+    target: 'web',
     output: {
-        path: path.resolve(__dirname, 'dist'),
+        path: path.resolve(__dirname, `dist/public`),
         filename: '[name].js',
+        publicPath: '/public/'
     },
     resolve: {
-        extensions: ['.ts', '.tsx', '.js']
+        extensions: ['.ts', '.tsx', '.js'],
     },
     module: {
         rules: [
             {
                 test: /\.tsx?$/,
                 exclude: path.resolve(__dirname, "node_modules"),
-                use: [
-                    {
-                        loader: 'babel-loader'
-                    },
-                    {
-                        loader: 'ts-loader'
-                    }
-                ],
+                use: ['babel-loader', 'ts-loader'],
             },
         ]
     },
-    plugins: isServer
-        ? undefined
-        : [new webpack.HotModuleReplacementPlugin()],
-    externals: isServer? [nodeExternals()] : undefined
-})
-
-module.exports = (env, argv) => {
-    if(argv.mode === 'development') {
-        return [getConfig(true, true), getConfig(false, true)];
-    }
-    else if(argv.mode === 'production') {
-        return [getConfig(true, false), getConfig(false, false)];
-    }    
-};
+    plugins: devMode? [
+        new LoadablePlugin(), 
+        new webpack.HotModuleReplacementPlugin(), 
+        new webpack.NoEmitOnErrorsPlugin()
+    ] : [
+        new LoadablePlugin()
+    ]
+},
+{
+    entry: {
+        server: ['./src/server.tsx']
+    },
+    devtool:'inline-source-map',
+    target: 'node',
+    output: {
+        path: path.resolve(__dirname, `dist/server`),
+        filename: '[name].js',
+        publicPath: '/server/',
+        libraryTarget: 'commonjs2',
+    },
+    resolve: {
+        extensions: ['.ts', '.tsx', '.js'],
+    },
+    module: {
+        rules: [
+            {
+                test: /\.tsx?$/,
+                exclude: path.resolve(__dirname, "node_modules"),
+                use: ['babel-loader', 'ts-loader'],
+            },
+        ]
+    },
+    externals: [nodeExternals()]
+}]

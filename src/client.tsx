@@ -1,30 +1,22 @@
-import 'core-js/stable';
-import 'regenerator-runtime/runtime';
-
 import React from 'react';
 import { hydrate } from 'react-dom';
 import { createStore } from 'redux';
 import { Provider } from 'react-redux';
+import {loadableReady} from '@loadable/component'
 import App from './App';
 import { RootReducer } from './reducers/index';
 
-//extend global window property.
-declare global {
-    interface Window {
-        __PRELOADED_STATE__:string;
-    }
+const store = createStore(RootReducer);
+
+loadableReady(()=> {
+    hydrate(
+        <Provider store={store}>
+            <App/>
+        </Provider>,
+        document.getElementById('root')
+    );
+});
+
+if(module.hot) {
+    module.hot.accept();
 }
-type State = ReturnType<typeof RootReducer>;
-
-const preloadedState:State = JSON.parse(window.__PRELOADED_STATE__);
-
-delete window.__PRELOADED_STATE__;
-
-const store = createStore(RootReducer, preloadedState);
-
-hydrate(
-    <Provider store={store}>
-        <App/>
-    </Provider>,
-    document.getElementById('root')
-);
