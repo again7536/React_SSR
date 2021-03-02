@@ -6,9 +6,11 @@ const webpack = require('webpack');
 const devMode = process.env.NODE_ENV === "development"? true : false;
 
 module.exports = [{
+    //Web
     entry: {
         client: ['webpack-hot-middleware/client','./src/client.tsx']
     },
+    mode: devMode? 'development' : 'production',
     devtool:'inline-source-map',
     target: 'web',
     output: {
@@ -37,9 +39,11 @@ module.exports = [{
     ]
 },
 {
+    //Rendering Server
     entry: {
         server: ['./src/server.tsx']
     },
+    mode: devMode? 'development' : 'production',
     devtool:'inline-source-map',
     target: 'node',
     output: {

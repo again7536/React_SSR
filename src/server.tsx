@@ -8,6 +8,7 @@ import React from 'react';
 import store from './reducers/index';
 import { Provider } from 'react-redux';
 import { renderToString } from 'react-dom/server';
+import { StaticRouter } from 'react-router-dom';
 import { ChunkExtractor } from '@loadable/server';
 
 import App from './App';
@@ -46,13 +47,14 @@ function handleRender(req:Express.Request, res:Express.Response){
   const webStats = path.resolve(__dirname, '../public/loadable-stats.json');
   const webExtractor = new ChunkExtractor({statsFile:webStats, entrypoints:["client"]});
 
+  const context = {};
   const html =  renderToString(webExtractor.collectChunks(
     <Provider store={store}>
-      <App/>
+      <StaticRouter location={req.url} context={context}>
+        <App/>
+      </StaticRouter>
     </Provider>
   ));
-
-  const preloadedState = store.getState();
 
   res.send(`
   <!DOCTYPE html>
